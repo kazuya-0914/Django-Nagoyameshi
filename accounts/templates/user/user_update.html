@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}NAGOYAMESHI{% endblock %}
+{% block content %}
+<main>
+  <div class="container nagoyameshi-container pb-5">
+    <div class="row justify-content-center">
+      <div class="col-xl-5 col-lg-6 col-md-8">
+        <nav class="my-3" style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
+          <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item">
+              <a href="{% url 'top_page' %}">ホーム</a>
+            </li>
+            <li class="breadcrumb-item">
+              <a href="{% url 'user_detail' user.id %}">会員情報</a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">会員情報編集</li>
+          </ol>
+        </nav>
+
+        <h1 class="mb-3 text-center">会員情報編集</h1>
+        <hr class="mb-4">
+
+        <form method="POST" enctype='multipart/form-data'>
+          {% csrf_token %}
+          <div class="form-group row mb-3">
+            <label for="name" class="col-md-5 col-form-label text-md-left fw-bold">
+              <div class="d-flex align-items-center">
+                <span class="me-1">氏名</span>
+                <span class="badge bg-danger">必須</span>
+              </div>
+            </label>
+
+            <div class="col-md-7">
+              {{ form.user_name }}
+            </div>
+          </div>
+
+          <div class="form-group row mb-3">
+            <label for="kana" class="col-md-5 col-form-label text-md-left fw-bold">
+              <div class="d-flex align-items-center">
+                <span class="me-1">フリガナ</span>
+                <span class="badge bg-danger">必須</span>
+              </div>
+            </label>
+
+            <div class="col-md-7">
+              {{ form.hurigana }}
+            </div>
+          </div>
+
+          <div class="form-group row mb-3">
+                        <label for="postal_code" class="col-md-5 col-form-label text-md-left fw-bold">
+                            <div class="d-flex align-items-center">
+                                <span class="me-1">郵便番号</span>
+                                <span class="badge bg-danger">必須</span>
+                            </div>
+                        </label>
+
+                        <div class="col-md-7">
+                            {{ form.zip_code }}
+
+                        </div>
+          </div>
+
+                    <div class="form-group row mb-3">
+                        <label for="address" class="col-md-5 col-form-label text-md-left fw-bold">
+                            <div class="d-flex align-items-center">
+                                <span class="me-1">住所</span>
+                                <span class="badge bg-danger">必須</span>
+                            </div>
+                        </label>
+
+                        <div class="col-md-7">
+                            {{ form.address }}
+
+                        </div>
+                    </div>
+
+                    <div class="form-group row mb-3">
+                        <label for="phone_number" class="col-md-5 col-form-label text-md-left fw-bold">
+                            <div class="d-flex align-items-center">
+                                <span class="me-1">電話番号</span>
+                                <span class="badge bg-danger">必須</span>
+                            </div>
+                        </label>
+
+                        <div class="col-md-7">
+                            {{ form.phone_number }}
+
+                        </div>
+                    </div>
+
+                    <div class="form-group row mb-3">
+                        <label for="birthday" class="col-md-5 col-form-label text-md-left fw-bold">誕生日</label>
+
+                        <div class="col-md-7">
+                            {{ form.birthday }}
+
+                        </div>
+                    </div>
+
+                    <div class="form-group row mb-3">
+                        <label for="occupation" class="col-md-5 col-form-label text-md-left fw-bold">職業</label>
+
+                        <div class="col-md-7">
+                            {{ form.job }}
+
+                        </div>
+                    </div>
+
+            <div class="form-group row mb-3">
+              <label for="email" class="col-md-5 col-form-label text-md-left fw-bold">
+                <div class="d-flex align-items-center">
+                  <span class="me-1">メールアドレス</span>
+                  <span class="badge bg-danger">必須</span>
+                </div>
+              </label>
+
+              <div class="col-md-7">
+                {{ form.email }}
+              </div>
+            </div>
+          <hr class="my-4">
+
+          <div class="form-group d-flex justify-content-center">
+            <button type="submit" class="btn btn-primary text-white shadow-sm w-50">更新</button>
+          </div>
+        </form>
+
+      </div>
+    </div>
+  </div>
+</main>
+{% endblock %}

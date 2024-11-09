@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}NAGOYAMESHI{% endblock %}
+{% block content %}
+<main>
+  <div class="container py-4 nagoyameshi-container">
+    <div class="row justify-content-center">
+      <div class="col-xl-3 col-lg-4 col-md-5 col-sm-7">
+        <h1 class="mb-4 text-center">ログイン</h1>
+        <form method="post" action="{% url 'account_login' %}">
+          {% csrf_token %}
+          <div class="form-group mb-3">
+            {{ form.login }}
+          </div>
+          <div class="form-group mb-3">
+            {{ form.password }}
+          </div>
+          <div class="form-group mb-3">
+            <div class="form-check">
+              {{ form.remember }}
+              <label class="form-check-label" for="remember">
+                次回から自動的にログインする
+              </label>
+            </div>
+          </div>
+            {% if redirect_field_value %}
+            <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}"/>
+            {% endif %}
+          <div class="form-group d-flex justify-content-center mb-4">
+            <button type="submit" class="btn btn-primary text-white shadow-sm w-100">ログイン</button>
+          </div>
+        </form>
+        <hr class="my-4">
+        <div class="text-center">
+          <a href="{% url 'account_signup' %}">
+            新規会員登録はこちら
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+{% endblock %}

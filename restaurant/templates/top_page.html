@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}NAGOYAMESHI{% endblock title %}
+
+{% block stylesheet %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@8/swiper-bundle.min.css">
+{% endblock stylesheet %}
+
+{% block content %}
+<main>
+  {# スライドショー#}
+  <div>
+    <div class="swiper">
+      <div class="swiper-wrapper">
+        <div class="swiper-slide">
+          <img src="{% static 'images/main/main1.jpeg' %}">
+        </div>
+        <div class="swiper-slide">
+          <img src="{% static 'images/main/main2.jpeg' %}">
+        </div>
+        <div class="swiper-slide">
+          <img src="{% static 'images/main/main3.jpeg' %}">
+        </div>
+        <div class="d-flex align-items-center overlay-background">
+          <div class="container nagoyameshi-container overlay-text">
+            <h1 class="text-white catchphrase-heading">名古屋ならではの味を、<br>見つけよう</h1>
+            <p class="text-white catchphrase-paragraph">NAGOYAMESHIは、<br>名古屋市のB級グルメ専門のレビューサイトです。 </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  
+</main>
+{% endblock content %}
+
+{% block js_script %}
+<script src="https://cdn.jsdelivr.net/npm/swiper@8/swiper-bundle.min.js"></script>
+<script>
+  const swiper = new Swiper('.swiper', {
+    loop: true,
+    effect: "fade",
+    speed: 2000,
+    allowTouchMove: false,
+    autoplay: {
+      delay: 4500,
+      disableOnInteraction: false,
+    },
+  });
+</script>
+{% endblock js_script %}

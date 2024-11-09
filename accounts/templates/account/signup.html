@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}NAGOYAMESHI{% endblock title %}
+{% block content %}
+<main>
+  <div class="container pt-4 pb-5 nagoyameshi-container">
+    <div class="row justify-content-center">
+      <div class="col-xl-5 col-lg-6 col-md-8">
+        <h1 class="mb-4 text-center">新規会員登録</h1>
+        <hr class="mb-4">
+        <form method="post" action="{% url 'account_signup' %}">
+          {% csrf_token %}
+          <div class="form-group row mb-3">
+            <label for="name" class="col-md-5 col-form-label text-md-left fw-bold">
+              <div class="d-flex align-items-center">
+                <span class="me-1">氏名</span>
+                <span class="badge bg-danger">必須</span>
+              </div>
+            </label>
+            <div class="col-md-7">
+              {{ form.user_name }}
+            </div>
+          </div>
+          <div class="form-group row mb-3">
+            <label for="kana" class="col-md-5 col-form-label text-md-left fw-bold">
+              <div class="d-flex align-items-center">
+                <span class="me-1">フリガナ</span>
+                <span class="badge bg-danger">必須</span>
+              </div>
+            </label>
+              <div class="col-md-7">
+                {{ form.hurigana }}
+              </div>
+          </div>
+          <div class="form-group row mb-3">
+            <label for="postal_code" class="col-md-5 col-form-label text-md-left fw-bold">
+              <div class="d-flex align-items-center">
+                <span class="me-1">郵便番号</span>
+                <span class="badge bg-danger">必須</span>
+              </div>
+            </label>
+            <div class="col-md-7">
+              {{ form.zip_code }}
+            </div>
+          </div>
+          <div class="form-group row mb-3">
+            <label for="address" class="col-md-5 col-form-label text-md-left fw-bold">
+              <div class="d-flex align-items-center">
+                <span class="me-1">住所</span>
+                <span class="badge bg-danger">必須</span>
+              </div>
+            </label>
+            <div class="col-md-7">
+              {{ form.address }}
+            </div>
+          </div>
+          <div class="form-group row mb-3">
+            <label for="phone_number" class="col-md-5 col-form-label text-md-left fw-bold">
+              <div class="d-flex align-items-center">
+                <span class="me-1">電話番号</span>
+                <span class="badge bg-danger">必須</span>
+              </div>
+            </label>
+            <div class="col-md-7">
+              {{ form.phone_number }}
+            </div>
+          </div>
+          <div class="form-group row mb-3">
+            <label for="birthday" class="col-md-5 col-form-label text-md-left fw-bold">誕生日</label>
+            <div class="col-md-7">
+              {{ form.birthday }}
+            </div>
+          </div>
+          <div class="form-group row mb-3">
+            <label for="occupation" class="col-md-5 col-form-label text-md-left fw-bold">職業</label>
+            <div class="col-md-7">
+              {{ form.job }}
+            </div>
+          </div>
+          <div class="form-group row mb-3">
+            <label for="email" class="col-md-5 col-form-label text-md-left fw-bold">
+              <div class="d-flex align-items-center">
+                <span class="me-1">メールアドレス</span>
+                <span class="badge bg-danger">必須</span>
+              </div>
+            </label>
+            <div class="col-md-7">
+              {{ form.email }}
+            </div>
+          </div>
+          <div class="form-group row mb-3">
+            <label for="password" class="col-md-5 col-form-label text-md-left fw-bold">
+              <div class="d-flex align-items-center">
+                <span class="me-1">パスワード</span>
+                <span class="badge bg-danger">必須</span>
+                </div>
+            </label>
+          <div class="col-md-7">
+            {{ form.password1 }}
+          </div>
+          </div>
+          <div class="form-group row mb-3">
+            <label for="password-confirm" class="col-md-5 col-form-label text-md-left fw-bold">
+              <div class="d-flex align-items-center">
+                <span class="me-1">パスワード（確認用）</span>
+                <span class="badge bg-danger">必須</span>
+              </div>
+            </label>
+            <div class="col-md-7">
+              {{ form.password2 }}
+            </div>
+          </div>
+          <hr class="my-4">
+          <div class="form-group d-flex justify-content-center mb-4">
+            <button type="submit" class="btn btn-primary text-white shadow-sm w-50">登録</button>
+          </div>
+        </form>
+        <div class="text-center">
+          <a href="{% url 'account_login' %}">
+            すでに登録済みの方はこちら
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+{% endblock content %}
