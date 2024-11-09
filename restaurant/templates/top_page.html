@@ -31,7 +31,108 @@
     </div>
   </div>
 
-  
+  {# キーワードから探す #}
+  <div class="bg-light mb-4 py-4">
+    <div class="container nagoyameshi-container">
+      <h2 class="mb-3">キーワードから探す</h2>
+      <form method="GET" action="{% url 'restaurant_list' %}" class="user-search-box">
+        <div class="input-group">
+          <input type="text" class="form-control" placeholder="店舗名・エリア・カテゴリ" name="keyword">
+          <input type="hidden" name="button_type" value="keyword">
+          <button type="submit" class="btn btn-primary text-white shadow-sm">検索</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  {# 評価が高いお店 #}
+  <div class="container nagoyameshi-container">
+    <h2 class="mb-3">評価が高いお店</h2>
+    <div class="row row-cols-xl-6 row-cols-md-3 row-cols-2 g-3 mb-5">
+      {#TODO:6#}
+      {% for restaurant in restaurant_list %}
+      {# {% for restaurant,rate,rate_star in restaurant_list %}#}
+      <div class="col">
+        <a href="{% url 'restaurant_detail' restaurant.id %}" class="link-dark card-link">
+          <div class="card h-100">
+            {% if restaurant.photo %}
+            <img src="{{ restaurant.photo.url }}" class="card-img-top vertical-card-image">
+            {% endif %}
+            <div class="card-body">
+              <h3 class="card-title">{{ restaurant.name }}</h3>
+              <div class="text-muted small mb-1">
+                <div class="d-inline-block">
+                  {{ restaurant.category }}
+                </div>
+              </div>
+              <p class="card-text">
+              {#TODO:7#}
+              <span class="star-rating me-1" data-rate="5"></span>
+              5.0
+              {# <span class="star-rating me-1" data-rate="{{ rate_star }}"></span>#}
+              {# {{ rate }}#}
+              </p>
+            </div>
+          </div>
+        </a>
+      </div>
+      {% endfor %}
+    </div>
+
+    {# カテゴリから探す #}
+    <h2 class="mb-3">カテゴリから探す</h2>
+    <div class="row row-cols-xl-6 row-cols-md-3 row-cols-2 g-3 mb-3">
+      {% for category in category_list %}
+      {% if forloop.counter < 7 %}
+      <div class="col">
+        <a href="{% url 'restaurant_list' %}?category={{ category.name }}&button_type=category" class="card-link">
+          <div class="card text-white">
+            {% if category.photo %}
+            <img src="{{ category.photo.url }}" class="card-img vertical-card-image" alt="{{ category.name }}">
+            {% endif %}
+            <div class="card-img-overlay d-flex justify-content-center align-items-center overlay-background">
+              <h3 class="card-title category-name">{{ category.name }}</h3>
+            </div>
+          </div>
+        </a>
+      </div>
+      {% endif %}
+      {% endfor %}
+    </div>
+    <div class="mb-5">
+      {% for category in category_list %}
+      {% if forloop.counter > 6 %}
+      {#TODO:4#}
+      <a href="#" class="btn btn-outline-secondary btn-sm me-1 mb-2">{{ category.name }}</a>
+      {% endif %}
+      {% endfor %}
+    </div>
+
+    {# 新規掲載店 #}
+    <h2 class="mb-3">新規掲載店</h2>
+    <div class="row row-cols-xl-6 row-cols-md-3 row-cols-2 g-3 mb-5">
+      {% for new_restaurant in new_restaurant_list %}
+      <div class="col">
+        <a href="{% url 'restaurant_detail' new_restaurant.id %}" class="link-dark card-link">
+          <div class="card h-100">
+            {% if new_restaurant.photo %}
+            <img src="{{ new_restaurant.photo.url }}" class="card-img-top vertical-card-image">
+            {% endif %}
+            <div class="card-body">
+              <h3 class="card-title">{{ new_restaurant.name }}</h3>
+              <div class="text-muted small mb-1">
+                <div class="d-inline-block">
+                  {{ new_restaurant.category }}
+                </div>
+              </div>
+              <p class="card-text">{{ new_restaurant.description| truncatechars:20 }}</p>
+            </div>
+          </div>
+        </a>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
 </main>
 {% endblock content %}
 

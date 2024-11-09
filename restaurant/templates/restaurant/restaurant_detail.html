@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}NAGOYAMESHI{% endblock title %}
+{% block content %}
+<main>
+  <div class="container nagoyameshi-container pb-5">
+    <div class="row justify-content-center">
+      <div class="col-xxl-6 col-xl-7 col-lg-8 col-md-10">
+        <nav class="my-3" style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
+          <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item">
+              <a href="{% url 'top_page' %}">ホーム</a>
+            </li>
+            <li class="breadcrumb-item">
+              <a href="{% url 'restaurant_list' %}?keyword=&button_type=keyword">店舗一覧</a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">店舗詳細</li>
+          </ol>
+        </nav>
+
+        <h1 class="mb-2 text-center">{{ object.name }}</h1>
+        <p class="text-center">
+          <span class="star-rating me-1" data-rate="{{ average_rate_star }}"></span>
+          {{ average_rate }} （{{ rate_count }}件）
+        </p>
+        <ul class="nav nav-tabs mb-2">
+          <li class="nav-item">
+            <a class="nav-link active bg-primary text-white" aria-current="page" href="{% url 'restaurant_detail' object.id %}">トップ</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link link-dark" href="#">予約</a>
+            {# TODO:2#}
+            {#href="{% url 'reservation_create' object.id %}">予約</a>#}
+          </li>
+          <li class="nav-item">
+            <a class="nav-link link-dark" href="#">レビュー</a>
+            {# TODO:3#}
+            {# href="{% url 'review_list' object.id %}">レビュー</a>#}
+          </li>
+        </ul>
+        <div class="mb-2">
+          {% if object.photo %}
+          <img src="{{ object.photo.url }}" class="w-100">
+          {% endif %}
+        </div>
+          <div class="container">
+            <div class="row pb-2 mb-2 border-bottom">
+              <div class="col-2">
+                <span class="fw-bold">店舗名</span>
+              </div>
+              <div class="col">
+                <span>{{ object.name }}</span>
+              </div>
+            </div>
+            <div class="row pb-2 mb-2 border-bottom">
+              <div class="col-2">
+                <span class="fw-bold">説明</span>
+              </div>
+              <div class="col">
+                <span>{{ object.description }}</span>
+              </div>
+            </div>
+            <div class="row pb-2 mb-2 border-bottom">
+              <div class="col-2">
+                <span class="fw-bold">価格帯</span>
+              </div>
+              <div class="col">
+                <span>{{ object.price }}</span>
+              </div>
+            </div>
+            <div class="row pb-2 mb-2 border-bottom">
+              <div class="col-2">
+                <span class="fw-bold">郵便番号</span>
+              </div>
+              <div class="col">
+                <span>{{ object.zip_code }}</span>
+              </div>
+            </div>
+            <div class="row pb-2 mb-2 border-bottom">
+              <div class="col-2">
+                <span class="fw-bold">住所</span>
+              </div>
+              <div class="col">
+                <span>{{ object.address }}</span>
+              </div>
+            </div>
+            <div class="row pb-2 mb-2 border-bottom">
+              <div class="col-2">
+                <span class="fw-bold">営業時間</span>
+              </div>
+              <div class="col">
+                <span>{{ object.business_time }}</span>
+              </div>
+            </div>
+            <div class="row pb-2 mb-2 border-bottom">
+              <div class="col-2">
+                <span class="fw-bold">定休日</span>
+              </div>
+              <div class="col d-flex">
+                <div>
+                  {{ object.close_day_of_week }}
+                </div>
+              </div>
+            </div>
+            <div class="row pb-2 mb-2 border-bottom">
+              <div class="col-2">
+                <span class="fw-bold">座席数</span>
+              </div>
+              <div class="col">
+                <span>{{ object.seats_number }}</span>
+              </div>
+            </div>
+            <div class="row pb-2 mb-4 border-bottom">
+              <div class="col-2">
+                <span class="fw-bold">カテゴリ</span>
+              </div>
+              <div class="col d-flex">
+                <div>
+                  {{ object.category }}
+                </div>
+              </div>
+            </div>
+          <form method="POST" enctype="multipart/form-data" class="text-center">
+            {% csrf_token %}
+            {% if is_favorite %}
+            <button type="submit" class="btn btn-outline-primary shadow-sm w-50 remove-favorite-button">
+              ♥ お気に入り解除
+            </button>
+            {% else %}
+            <button type="submit" class="btn btn-primary text-white shadow-sm w-50">
+              ♥ お気に入り追加
+            </button>
+            {% endif %}
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+{% endblock content %}
