@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 {% block title %}NAGOYAMESHI{% endblock title %}
+
 {% block content %}
 <main>
   <div class="container nagoyameshi-container pb-5">
@@ -28,14 +29,10 @@
             <a class="nav-link active bg-primary text-white" aria-current="page" href="{% url 'restaurant_detail' object.id %}">トップ</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link link-dark" href="#">予約</a>
-            {# TODO:2#}
-            {#href="{% url 'reservation_create' object.id %}">予約</a>#}
+            <a class="nav-link link-dark" href="{% url 'reservation_create' object.id %}">予約</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link link-dark" href="#">レビュー</a>
-            {# TODO:3#}
-            {# href="{% url 'review_list' object.id %}">レビュー</a>#}
+            <a class="nav-link link-dark" href="{% url 'review_list' object.id %}">レビュー</a>
           </li>
         </ul>
         <div class="mb-2">

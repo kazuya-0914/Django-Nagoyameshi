@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}NAGOYAMESHI{% endblock title %}
+
+{% block content %}
+<main>
+  <div class="container nagoyameshi-container pb-5">
+    <div class="row justify-content-center">
+      <div class="col-xxl-6 col-xl-7 col-lg-8 col-md-10">
+        <nav class="my-3" style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
+          <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item">
+              <a href="{% url 'top_page' %}">ホーム</a>
+            </li>
+            <li class="breadcrumb-item">
+              <a href="{% url 'restaurant_list' %}?keyword=&button_type=keyword">店舗一覧</a>
+            </li>
+            <li class="breadcrumb-item">
+              <a href="{% url 'restaurant_detail' restaurant.id %}">店舗詳細</a>
+            </li>
+            <li class="breadcrumb-item">
+              <a href="{% url 'review_list' restaurant.id %}">レビュー</a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">レビュー投稿</li>
+          </ol>
+        </nav>
+
+        <h1 class="mb-2 text-center">{{ restaurant.name }}</h1>
+        <!-- 星評価のアイコンは0.5刻みにし、数値は小数点第3位以下を四捨五入する（小数点第2位まで表示する） -->
+        <p class="text-center">
+          <span class="star-rating me-1" data-rate="{{ average_rate_star }}">{{ average_rate }} （{{ rate_count }}件）</span>
+        </p>
+
+        <ul class="nav nav-tabs mb-3">
+          <li class="nav-item">
+            <a class="nav-link link-dark" href="{% url 'restaurant_detail' restaurant.id %}">トップ</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link link-dark" href="{% url 'reservation_create' restaurant.id %}">予約</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link active bg-primary text-white" aria-current="page" href="{% url 'review_list' restaurant.id %}">レビュー</a>
+          </li>
+        </ul>
+
+        <form method="POST" enctype='multipart/form-data'>
+          {% csrf_token %}
+          <div class="mb-3">
+            <label class="form-label text-md-left fw-bold">評価</label>
+            <div>
+              {% for form_rate in form.rate %}
+              <div class="form-check form-check-inline">
+              {{ form_rate }}
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+          <div class="mb-4">
+            <label for="content" class="form-label text-md-left fw-bold">感想</label>
+            <div>
+              {{ form.comment }}
+            </div>
+          </div>
+          <div class="form-group d-flex justify-content-center mb-4">
+            <button type="submit" class="btn btn-primary text-white shadow-sm w-50">投稿</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</main>
+{% endblock content %}

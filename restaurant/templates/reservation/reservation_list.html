@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}NAGOYAMESHI{% endblock title %}
+{% block stylesheet %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+{% endblock stylesheet %}
+
+{% block content %}
+<main>
+  <!-- 予約のキャンセル用モーダル -->
+  <div class="modal fade" id="cancelReservationModal" tabindex="-1" aria-labelledby="cancelReservationModalLabel">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="cancelReservationModalLabel">
+            予約をキャンセルしてもよろしいですか？
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="閉じる"></button>
+        </div>
+        <div class="modal-footer">
+          <form action="" method="post" name="cancelReservationForm">
+            {% csrf_token %}
+            <button id="reserve-delete-button" type="button" class="btn btn-danger text-white shadow-sm">
+              削除
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="container nagoyameshi-container pb-5">
+    <div class="row justify-content-center">
+      <div class="col-xxl-6 col-xl-7 col-lg-8 col-md-10">
+        <nav class="my-3" style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
+          <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item">
+              <a href="{% url 'top_page' %}">ホーム</a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">予約一覧</li>
+          </ol>
+        </nav>
+        <h1 class="mb-3 text-center">予約一覧</h1>
+        <table class="table">
+          <thead>
+            <tr>
+              <th scope="col">店舗名</th>
+              <th scope="col">予約日時</th>
+              <th scope="col">人数</th>
+              <th scope="col"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for reserve in object_list %}
+            <tr>
+              <td>
+                <a href="{% url 'restaurant_detail' reserve.restaurant.id %}">
+                  {{ reserve.restaurant.name }}
+                </a>
+              </td>
+              <td>{{ reserve.date }} {{ reserve.time }}</td>
+              <td>{{ reserve.number_of_people }}</td>
+              <td>
+                {% if reserve.date > today %}
+                <a href="#" class="link-secondary"
+                  data-bs-toggle="modal" data-bs-target="#cancelReservationModal"
+                  data-reservation-id="{{ reserve.id }}"
+                  data-restaurant-name="{{ reserve.restaurant.name }}">
+                キャンセル</a>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+          </table>
+          <!-- ページネーション処理 -->
+          {% if is_paginated %}
+          <div class="d-flex justify-content-center">
+            <nav>
+              <ul class="pagination">
+                <!-- 前ページへのリンク -->
+                {% if page_obj.has_previous %}
+                <li class="page-item">
+                  <a class="page-link" href="?page={{ page_obj.previous_page_number }}" rel="prev" aria-label="&laquo; 前">&lsaquo;</a>
+                </li>
+                {% endif %}
+                <!-- ページ数表示 -->
+                {% for page_num in page_obj.paginator.page_range %}
+                {% if page_obj.number == page_num %}
+                <li class="page-item active" aria-current="page">
+                  <span class="page-link">{{ page_num }}</span>
+                </li>
+                {% else %}
+                <li class="page-item">
+                  <a class="page-link" href="?page={{ page_num }}">{{ page_num }}</a>
+                </li>
+                {% endif %}
+                {% endfor %}
+                <!-- 次ページへのリンク -->
+                {% if page_obj.has_next %}
+                <li class="page-item">
+                  <a class="page-link" href="?page={{ page_obj.next_page_number }}" rel="next" aria-label="次 &raquo;">&rsaquo;</a>
+                </li>
+                {% endif %}
+              </ul>
+            </nav>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</main>
+{% endblock content %}

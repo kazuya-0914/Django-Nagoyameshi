@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}NAGOYAMESHI{% endblock title %}
+{% block content %}
+<main>
+  <!-- お気に入りの解除用モーダル -->
+  <div class="modal fade" id="removeFavoriteModal" tabindex="-1" aria-labelledby="removeFavoriteModalLabel">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="removeFavoriteModalLabel">
+            お気に入りを解除してもよろしいですか？
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="閉じる"></button>
+        </div>
+        <div class="modal-footer">
+          <form action="" method="post" name="removeFavoriteForm">
+            {% csrf_token %}
+            <button id="favorite-delete-button" type="button" class="btn btn-danger text-white shadow-sm">
+              解除
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container nagoyameshi-container pb-5">
+    <div class="row justify-content-center">
+      <div class="col-xxl-6 col-xl-7 col-lg-8 col-md-10">
+        <nav class="my-3" style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
+          <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item">
+              <a href="{% url 'top_page' %}">ホーム</a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">お気に入り一覧</li>
+          </ol>
+        </nav>
+            <h1 class="mb-3 text-center">お気に入り一覧</h1>
+            <table class="table">
+              <thead>
+                <tr>
+                  <th scope="col">店舗名</th>
+                  <th scope="col">郵便番号</th>
+                  <th scope="col">住所</th>
+                  <th scope="col"></th>
+                </tr>
+              </thead>
+              <tbody>
+              {% for favorite in object_list %}
+                <tr>
+                  <td>
+                    <a href="{% url 'restaurant_detail' favorite.restaurant.id %}">
+                      {{ favorite.restaurant.name }}
+                    </a>
+                  </td>
+                  <td>{{ favorite.restaurant.zip_code }}</td>
+                  <td>{{ favorite.restaurant.address }}</td>
+                  <td>
+                    <a href="#" class="link-secondary" data-bs-toggle="modal"
+                    data-bs-target="#removeFavoriteModal" data-favorite-id="{{ favorite.id }}"
+                    data-restaurant-name=" {{ favorite.restaurant.name }}">解除</a>
+                  </td>
+                </tr>
+              {% endfor %}
+              </tbody>
+            </table>
+        <div class="d-flex justify-content-center"></div>
+      </div>
+    </div>
+  </div>
+</main>
+{% endblock content %}
+
+{% block js_script %}
+<script src="https://code.jquery.com/jquery-3.7.1.js" integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4=" crossorigin="anonymous">
+</script>
+<script>
+    const cancelReservationForm = document.forms.cancelReservationForm;
+
+    document.getElementById('removeFavoriteModal').addEventListener('show.bs.modal', (event) => {
+        let deleteButton = event.relatedTarget;
+        let favoriteId = deleteButton.dataset.favoriteId;
+        let reservationRestaurant = deleteButton.dataset.restaurantName;
+        console.log('favoriteId:', favoriteId)
+        console.log('reservationRestaurant:', reservationRestaurant)
+
+        document.getElementById('favorite-delete-button').addEventListener('click', () => {
+            deleteFavorite(favoriteId)
+        });
+
+    });
+
+    function deleteFavorite(id) {
+        $.ajax({
+            url: "/favorite-delete",
+            type: "GET",
+            data: {
+                pk: id
+            },
+            dataType: "json",
+            success: function (result) {
+                $('#removeFavoriteModal').modal('hide');
+                location.reload()
+            },
+            error: function () {
+                alert('error')
+            }
+        });
+    }
+</script>
+{% endblock js_script %}

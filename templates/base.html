@@ -52,10 +52,8 @@
 
               <div class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
                 <a class="dropdown-item" href="{% url 'user_detail' user.id %}">会員情報</a>
-                <a class="dropdown-item" {#TODO:2#} href="#">予約一覧</a>
-                {# href="{% url 'reservation_list' %}">予約一覧</a> #}
-                <a class="dropdown-item" {#TODO:3#} href="#">お気に入り一覧</a>
-                {# href="{% url 'favorite_list' %}">お気に入り一覧</a> #}
+                <a class="dropdown-item" href="{% url 'reservation_list' %}">予約一覧</a>
+                <a class="dropdown-item" href="{% url 'favorite_list' %}">お気に入り一覧</a>
                 <a class="dropdown-item" href="{% url 'subscribe_payment' %}">お支払い方法</a>
                 {# href="{% url 'subscribe_payment' %}">お支払い方法</a> #}
                 <a class="dropdown-item" href="{% url 'subscribe_cancel' %}">有料プラン解約</a>

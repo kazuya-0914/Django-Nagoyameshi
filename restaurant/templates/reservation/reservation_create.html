@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}NAGOYAMESHI{% endblock title %}
+{% block stylesheet %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+{% endblock stylesheet %}
+
+{% block content %}
+<main>
+  <div class="container nagoyameshi-container pb-5">
+    <div class="row justify-content-center">
+      <div class="col-xxl-6 col-xl-7 col-lg-8 col-md-10">
+        <nav class="my-3" style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
+          <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item">
+              <a href="{% url 'top_page' %}">ホーム</a>
+            </li>
+            <li class="breadcrumb-item">
+              <a href="{% url 'restaurant_list' %}?keyword=&button_type=keyword">店舗一覧</a>
+            </li>
+            <li class="breadcrumb-item">
+              <a href="{% url 'restaurant_detail' restaurant.id %}">店舗詳細</a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">予約</li>
+          </ol>
+        </nav>
+
+        <h1 class="mb-2 text-center">{{ restaurant.name }}</h1>
+          <p class="text-center">
+            <span class="star-rating me-1" data-rate="{{ average_rate_star }}">
+              {{ average_rate }} （{{ rate_count }}件）
+            </span>
+          </p>
+          <ul class="nav nav-tabs mb-3">
+            <li class="nav-item">
+              <a class="nav-link link-dark" href="{% url 'restaurant_detail' restaurant.id %}">トップ</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link active bg-primary text-white" aria-current="page" href="{% url 'reservation_create' restaurant.id %}">予約</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link link-dark" href="{% url 'review_list' restaurant.id %}">レビュー</a>
+            </li>
+          </ul>
+          <form method="POST" enctype='multipart/form-data'>
+            {% csrf_token %}
+            <div class="form-group row mb-3">
+              <label for="reservation_date" class="col-md-5 col-form-label text-md-left fw-bold">予約日</label>
+              <div class="col-md-7">
+                {{ form.date }}
+              </div>
+            </div>
+            <div class="form-group row mb-3">
+              <label for="reservation_time" class="col-md-5 col-form-label text-md-left fw-bold">時間</label>
+              <div class="col-md-7">
+                {{ form.time }}
+              </div>
+            </div>
+            <div class="form-group row mb-4">
+              <label for="number_of_people" class="col-md-5 col-form-label text-md-left fw-bold">人数</label>
+              <div class="col-md-7">
+                {{ form.number_of_people }}
+              </div>
+            </div>
+            <div class="form-group d-flex justify-content-center mb-4">
+              <button type="submit" class="btn btn-primary text-white shadow-sm w-50">予約する</button>
+            </div>
+          </form>
+        </div>
+      </div>
+  </div>
+</main>
+{% endblock content %}
+
+{% block js_script %}
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/ja.js"></script>
+<script>
+  const restaurantRegularHolidays = {{ close_day_list }};
+
+  flatpickr('#reservation_date', {
+    locale: 'ja',
+    minDate: 'today',
+    maxDate: new Date().fp_incr(60),
+    disable: [
+      function (date) {
+        return restaurantRegularHolidays.includes(date.getDay());
+      }
+    ]
+  });
+</script>
+{% endblock js_script %}
