@@ -176,3 +176,23 @@ ACCOUNT_FORMS = {
     'login': 'accounts.forms.MyLoginForm',
     'signup': 'accounts.forms.MySignupForm',
 }
+
+# Square決済の実装
+SQUARE_APPLICATION_ID = 'sandbox-sq0idb-6C3Bx1uKvBmuLbFtMswCYA'
+SQUARE_ACCESS_TOKEN = 'EAAAl0AEP5Mj36Ed-cJKRZ3I-ODdn1pc_Al35QSkAE4hY-pz3BSJ435OOE4ktlau'
+SQUARE_LOCATION_ID = 'LD5KRW7R56127'
+
+# CSP管理ライブラリの設定
+INSTALLED_APPS += ['csp']
+CSP_DEFAULT_SRC = ["'self'"]
+CSP_SCRIPT_SRC = [
+    "'self'",
+    "https://js.squareup.com",  # Squareの公式スクリプト
+    "https://sandbox.web.squarecdn.com",  # 必要なSquareのリソース
+    "https://csp-report.browser-intake-datadoghq.com",  # Squareのログ送信リソース
+]  # Squareのスクリプトを許可
+CSP_STYLE_SRC = ["'self'", "https://fonts.googleapis.com"]  # 必要ならスタイルソースも許可
+CSP_IMG_SRC = ["'self'", "data:"]
+CSP_FRAME_SRC = ["https://sandbox.web.squarecdn.com"]  # iframeが利用される場合
+CSP_USE_NONCE = True  # nonceを有効化
+CSP_REPORT_ONLY = True  # デバッグモード

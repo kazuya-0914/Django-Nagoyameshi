@@ -16,4 +16,5 @@ urlpatterns = [
   path('review-create/<int:pk>/', views.ReviewCreateView.as_view(), name="review_create"),
   path('review-update/<int:pk>/', views.ReviewUpdateView.as_view(), name="review_update"),
   path('review-delete', views.review_delete, name='review_delete'),
+  path('review-delete', views.review_delete, name='process_payment'),
 ]

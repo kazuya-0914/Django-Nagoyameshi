@@ -1,16 +1,24 @@
+from django.shortcuts import render, redirect
 from datetime import date
 
 from django.db.models import Avg
 from django.db.models import Q
 from django.db.models.query import QuerySet
 from django.http import JsonResponse
-from django.shortcuts import render, redirect
 from django.urls import reverse_lazy
 from django.views import generic
 
 from . import models
 from . import forms
 
+# 会社概要
+class CompanyView(generic.TemplateView):
+    template_name = "layout/company.html"
+# 利用規約
+class TermsView(generic.TemplateView):
+    template_name = "layout/terms.html"
+
+# トップ画面
 class TopPageView(generic.ListView):
     template_name = "top_page.html"
     model = models.Restaurant
@@ -50,40 +58,6 @@ class TopPageView(generic.ListView):
             'category_list': category_list,
             'new_restaurant_list': new_restaurant_list,
             'restaurant_list': zip(self.queryset, average_rate_list, average_rate_star_list),
-        })
-        return context
-
-# 会社概要
-class CompanyView(generic.TemplateView):
-    template_name = "layout/company.html"
-# 利用規約
-class TermsView(generic.TemplateView):
-    template_name = "layout/terms.html"
-
-# トップ画面
-class TopPageView(generic.ListView):
-    template_name = "top_page.html"
-    model = models.Restaurant
-    queryset = models.Restaurant.objects.order_by('-rate')
-    context_object_name = 'restaurant_list'
-
-    def get_context_data(self, **kwargs):
-        if 'price_session' in self.request.session:
-            self.request.session['price_session'] = 0
-        if 'keyword_session' in self.request.session:
-            self.request.session['keyword_session'] = ''
-        if 'category_session' in self.request.session:
-            self.request.session['category_session'] = ''
-        if 'select_sort' in self.request.session:
-            self.request.session['select_sort'] = '-created_at'
-
-        context = super(TopPageView, self).get_context_data(**kwargs)
-        category_list = models.Category.objects.all()
-        new_restaurant_list = models.Restaurant.objects.all().order_by('-created_at')
-
-        context.update({
-            'category_list': category_list,
-            'new_restaurant_list': new_restaurant_list,
         })
         return context
     
@@ -258,6 +232,7 @@ class RestaurantListView(generic.ListView):
             'price_session': price_session,
             'select_sort_session': select_sort_session,
             'restaurant_list': zip(restaurant_list, average_rate_list, average_rate_star_list, rate_num_list),
+            'restaurant_count': restaurant_list.count(), # 追記箇所
         })
 
         return context
@@ -417,12 +392,14 @@ class ReviewListView(generic.ListView):
         else:
             average_rate_star = round(average_rate * 2) / 2
 
+        # 追記箇所
+        rate_count = models.Review.objects.filter(restaurant=restaurant).count()
         context.update({
             'restaurant': restaurant,
             'is_posted': is_posted,
             'average_rate': average_rate,
             'average_rate_star': average_rate_star,
-
+            'rate_count': rate_count # 追記箇所
         })
         return context
         
