@@ -8,7 +8,9 @@ from .models import CustomUser
 from .models import Card
 
 # Square用に追記
+import datetime
 import json
+import uuid
 from django.http import JsonResponse
 from django.conf import settings
 from square.client import Client
@@ -32,7 +34,7 @@ class UserUpdateView(generic.UpdateView):
     def form_invalid(self, form):
         return super().form_invalid(form)
 
-# --- 有料プラン登録 --- #
+# ----- (1) 有料プラン登録 ----- #
 class SubscribeRegisterView(View):
     template = 'subscribe/subscribe_register.html'
 
@@ -47,70 +49,67 @@ class SubscribeRegisterView(View):
 
     # Postメソッド
     def post(self, request):
-        user_id = request.user.id
-        '''
-        card_name = request.POST.get('card_name')
-        card_number = request.POST.get('card_number')
-        '''
-        card_name = 'Taro Yamada'
-        card_number = '4242424242424242'
-
-        CustomUser.objects.filter(id=user_id) \
-        .update(is_subscribed=True, card_name=card_name, card_number=card_number)
+        # フロントエンドから送られてきたJSONデータを取得
+        try:
+            data = json.loads(request.body.decode('utf-8'))
+            nonce = data.get('nonce')
+            idempotency_key = data.get('idempotency_key')  # 一意のキー
+        except json.JSONDecodeError:
+            # エラーが発生した場合、エラーメッセージをJSONで登録ページに渡す
+            error_message = "JSONデータの取得に失敗しました。"
+            return JsonResponse({
+                'status': 'error',
+                'error_message': error_message,
+            }, status=400)
 
         # Square APIクライアントの初期化（本番環境では'sandbox'を'production'に変更）
-        client = Client(access_token=settings.SQUARE_ACCESS_TOKEN, environment='sandbox')
-
-        # フロントエンドから送られてきたデータを取得
-        nonce = request.POST.get('nonce')
-        idempotency_key = request.POST.get('idempotency_key')  # 一意のキー
-        plan_id = "あなたのPLAN ID"  # Squareダッシュボードで作成したプランIDに置き換える
-
-        # 顧客ID取得（subscribe_view関数は下記に記載）
-        customer_id = subscribe_view(request, client, idempotency_key)
+        client = Client(
+            access_token=settings.SQUARE_ACCESS_TOKEN,
+            environment='sandbox',
+        )
+        '''
+        顧客IDを発行し取得する（subscribe_view関数は下記に記載）
+        発行した顧客IDをデータベースに保存する（CustomUserモデルに追加）
+        '''
+        customer_id = subscribe_view(request, client)
+        customer_id = '9QHG1REFKB35NV0VGQ4Y3MYYZG'
+        # Squareダッシュボードで作成したPlan Variation IDに置き換える
+        plan_variation_id = "WICZNCINOMBV4QUHAXXI7NXL"
+        # カードトークンからカードIDを発行する（必ず文字列型）
+        card_id = str(save_card(request, client, customer_id, nonce))
 
         # サブスクリプション作成リクエストのデータ
         body = {
             "idempotency_key": idempotency_key,
             "location_id": settings.SQUARE_LOCATION_ID,
-            "plan_id": plan_id,
+            "plan_variation_id": plan_variation_id,
             "customer_id": customer_id,  # 顧客ID。SquareのCustomer APIで作成する必要あり
-            "card_id": nonce  # フロントエンドでトークン化されたカード情報
+            "card_id": card_id,  # 保存済みのカードID
+            "start_date": str(datetime.date.today()),  # サブスクリプション開始日
         }
 
         # サブスクリプションの作成リクエストを送信  
         result = client.subscriptions.create_subscription(body)
+        print(result.body)
 
         if result.is_success():
-            # 成功したらカード情報をデータベースに登録（save_cards_to_db関数は下記に記載）
+            # 成功したらカード情報をデータベースに登録し、有料会員に変更（save_cards_to_db関数は下記に記載）
             save_cards_to_db(request, client, customer_id)
 
-            # 成功時にトップページにリダイレクト
-            return redirect(reverse_lazy('top_page'))
-        else:
-            # エラーが発生した場合、エラーメッセージを含むコンテキストを登録ページに渡す
-            error_message = "サブスクリプションの登録に失敗しました。"
-            if result.errors:
-                error_message += ": ".join([error['detail'] for error in result.errors])
-            
-            context = {
+            # 成功時にトップページにリダイレクトするようにJSONで返答
+            return JsonResponse({
+                'status': 'success',
+                'redirect_url': reverse_lazy('top_page'),  # フロントエンドでリダイレクトするURLを提供
+            })
+        elif result.is_error():
+            # エラーが発生した場合、エラーメッセージをJSONで登録ページに渡す
+            error_message = f"【Squareのサブスクリプション登録に失敗しました】<br>{result.errors}"
+            return JsonResponse({
+                'status': 'error',
                 'error_message': error_message,
-            }
-            return render(request, self.template, context)
-        
-        '''
-        correct_cord_number = '4242424242424242'
-        if card_number != correct_cord_number:
-            context = {
-                'error_message': 'クレジットカード番号が正しくありません'
-            }
-            return render(self.request, self.template, context)
-        models.CustomUser.objects.filter(id=user_id) \
-        .update(is_subscribed=True, card_name=card_name, card_number=card_number)
-        return redirect(reverse_lazy('top_page'))
-        '''
+            }, status=400)
 
-# --- 有料プラン解約 --- #
+# ----- (2) 有料プラン解約 ----- #
 class SubscribeCancelView(generic.TemplateView):
     template_name = 'subscribe/subscribe_cancel.html'
 
@@ -119,7 +118,7 @@ class SubscribeCancelView(generic.TemplateView):
         models.CustomUser.objects.filter(id=user_id).update(is_subscribed=False)
         return redirect(reverse_lazy('top_view'))
 
-# --- クレジットカード変更 --- #
+# ----- (3) クレジットカード変更 ----- #
 class SubscribePaymentView(View):
     template = 'subscribe/subscribe_payment.html'
 
@@ -139,8 +138,8 @@ class SubscribePaymentView(View):
         card_name = request.POST.get('card_name')
         card_number = request.POST.get('card_number')
 
-        print(card_name, card_number)
-        CustomUser.objects.filter(id=user_id).update(card_name=card_name, card_number=card_number)
+        # print(card_name, card_number)
+        # CustomUser.objects.filter(id=user_id).update(card_name=card_name, card_number=card_number)
 
         # Square決済リクエストの処理
         client = Client(
@@ -166,45 +165,76 @@ class SubscribePaymentView(View):
 
         # return redirect(reverse_lazy('top_page'))
 
-# --- Square関連関数 --- #
-# 顧客ID取得のためのサブスクリプションページ設定
-def subscribe_view(request, client, idempotency_key):
+# ----- ■ Square関連関数 ■ ----- #
+'''
+顧客IDを発行し取得する
+発行した顧客IDをデータベースに保存する（CustomUserモデルに追加）
+'''
+def subscribe_view(request, client):
     # Squareで顧客を作成
     try:
-        # 顧客IDを取得
-        customer_id = create_customer(request, client, idempotency_key)
+        # 顧客IDを発行し取得する
+        customer_id = create_customer(request, client)
 
         # 取得した顧客IDをデータベースに保存する（CustomUserモデルに追加）
-        user = CustomUser()
+        user = request.user
         user.square_customer_id = customer_id
         user.save()
 
         return customer_id
     except Exception as e:
-        params = {
-            'error_message': f"顧客情報登録に失敗しました: {str(e)}"
-        }
-        return render(request, 'subscribe/subscribe_register.html', params)
+        # エラーメッセージをJSONで返す
+        error_message = f"【顧客IDのDB登録に失敗しました】<br>{str(e)}"
+        return JsonResponse({
+            'status': 'error',
+            'error_message': error_message,
+        }, status=400)
 
-# 顧客IDを取得
-def create_customer(request, client ,idempotency_key):
+# 顧客IDを発行し取得する
+def create_customer(request, client):
     # データベースからユーザー情報を取得
-    email = CustomUser.get("email")
+    email = request.user.email
 
     body = {
-        "idempotency_key": idempotency_key,
+        "idempotency_key": str(uuid.uuid4()),  # ユニークキー発行
         "email_address": email, 
-        # "given_name": given_name,
-        # "family_name": family_name,
     }
-    result = client.customers.create_customer(body)
+    result = client.customers.create_customer(body) # 顧客IDを発行
     if result.is_success():
         return result.body["customer"]["id"]  # 顧客IDを取得
     else:
-        params = {
-            'error_message': Exception(f"顧客情報登録に失敗しました: {result.errors}")
-        }
-        return render(request, 'subscribe/subscribe_register.html', params)
+        # エラーメッセージをJSONで返す
+        error_message = f"【Squareの顧客ID発行に失敗しました】<br>{result.errors}"
+        return JsonResponse({
+            'status': 'error',
+            'error_message': error_message,
+        }, status=400)
+
+'''
+CARD IDを発行し取得する
+カード情報をデータベースに登録する（Cardモデルに登録）
+有料会員に変更する（CustomUserモデルを更新）
+'''
+# トークンのカード情報からカードIDを取得する
+def save_card(request, client, customer_id, nonce):
+    body = {
+        "idempotency_key": str(uuid.uuid4()),  # ユニークキー発行
+        "source_id": nonce,  # フロントエンドから取得したカードトークン
+        "customer_id": customer_id,  # Square API で作成された顧客 ID
+    }
+
+    response = client.cards.create_card(body)
+
+    if response.is_success():
+        card_id = response.body["card"]["id"]
+        return card_id  # 保存されたカードIDを取得
+    else:
+        # エラーメッセージをJSONで返す
+        error_message = f"【カードの保存に失敗しました】<br>{response.errors}"
+        return JsonResponse({
+            'status': 'error',
+            'error_message': error_message,
+        }, status=400)
 
 # カード情報の取得
 def fetch_customer_cards(request, client, customer_id):
@@ -212,16 +242,20 @@ def fetch_customer_cards(request, client, customer_id):
     response = client.cards.list_cards(customer_id=customer_id)
 
     if response.is_success():
-        return response.body['cards']
+        return response.body.get('cards', [])
     else:
-        params = {
-            'error_message': Exception(f"カード情報取得に失敗しました: {response.errors}")
-        }
-        return render(request, 'subscribe/subscribe_register.html', params)
+        # エラーメッセージをJSONで返す
+        error_message = f"【Squareのカード情報取得に失敗しました】<br>{response.errors}"
+        return JsonResponse({
+            'status': 'error',
+            'error_message': error_message,
+        }, status=400)
     
-# カード情報の一部をデータベースに登録
+# カード情報をデータベースに登録し、有料会員に変更
 def save_cards_to_db(request, client, customer_id):
     try:
+        # 有料会員に変更
+        CustomUser.objects.filter(id=request.user.id).update(is_subscribed=True)
         # 顧客IDに紐づくカード情報を取得
         cards = fetch_customer_cards(request, client, customer_id)
 
@@ -229,8 +263,9 @@ def save_cards_to_db(request, client, customer_id):
             Card.objects.update_or_create(
                 card_id=card['id'],
                 defaults={
-                    'customer_id': customer_id,
+                    'user': request.user,
                     'cardholder_name': card.get('cardholder_name'),
+                    # 以下はSquareで情報取得可能
                     'brand': card['card_brand'],
                     'last_4': card['last_4'],
                     'exp_month': card['exp_month'],
@@ -238,7 +273,9 @@ def save_cards_to_db(request, client, customer_id):
                 }
             )
     except Exception as e:
-        params = {
-            'error_message': f"カード情報登録に失敗しました: {str(e)}"
-        }
-        return render(request, 'subscribe/subscribe_register.html', params)
+        # エラーメッセージをJSONで返す
+        error_message = f"【カード情報のDB登録に失敗しました】<br>{str(e)}"
+        return JsonResponse({
+            'status': 'error',
+            'error_message': error_message,
+        }, status=400)

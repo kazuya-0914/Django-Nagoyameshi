@@ -40,33 +40,19 @@
         <!-- Squareクレジットカード登録フォーム -->
         <form id="payment-form" method="post" enctype='multipart/form-data'>
           {% csrf_token %}
-          <input class="card-holder-name mb-3" id="card-holder-name" name="card_name" type="text" placeholder="カード名義人" required>
+          <!-- カード名義人フォーム -->
+          <input class="card-holder-name mb-3" id="cardholder-name" type="text" placeholder="カード名義人" required>
+          <!-- Square支払いフォーム -->
           <div id="card-container"></div>
-          {% if error_message %}
-          <p class="text-danger">{{ error_message }}</p>
-          {% endif %}
+          <!--エラー発生時はエラーメッセージをJSONで出力 -->
+          <p id="errorMessage" class="text-danger" style="display: none;"></p>
+          <!-- 登録ボタン -->
           <div class="d-flex justify-content-center">
             <button class="btn btn-primary text-white shadow-sm w-50" id="card-button" type="button">登録</button>
           </div>
         </form>
         <!-- Squareクレジットカード登録フォームここまで -->
 
-        {% comment %} 
-        <form id="card-form" method="post" enctype='multipart/form-data'>
-          {% csrf_token %}
-            <input class="card-holder-name mb-3" id="card-holder-name" name="card_name" type="text" placeholder="カード名義人" required>
-            <input class="card-holder-name mb-3" id="card-holder-number" name="card_number" type="text" placeholder="カード番号" required>
-            {% if error_message %}
-            <p class="text-danger">{{ error_message }}</p>
-            {% endif %}
-
-          <div class="d-flex justify-content-center">
-            <button class="btn btn-primary text-white shadow-sm w-50" id="card-button">
-              登録
-            </button>
-          </div>
-        </form>
-        {% endcomment %}
       </div>
     </div>
   </div>
@@ -77,6 +63,7 @@
   const applicationId = "{{ square_application_id }}";
   const locationId = "{{ square_location_id }}";
 
+  // ID名card-containerの要素に専用フォームを作成し、入力された情報を暗号化して「card」定数に格納
   async function initializeCard() {
     const payments = Square.payments(applicationId, locationId);
     const card = await payments.card();
@@ -84,33 +71,54 @@
     return card;
   }
 
+  // 「card」定数に格納されたカード情報を元に、views.pyの「SubscribeRegisterView」クラスにfetchAPIによるAjax送信
   async function handlePaymentMethodSubmission(event, card) {
     event.preventDefault();
-    const tokenResult = await card.tokenize();
+    // カード名義人を取得
+    const cardholderName = document.getElementById('cardholder-name').value;
+    // カード情報をトークン化
+    const tokenResult = await card.tokenize({
+      cardholderName: cardholderName,
+    });
     if (tokenResult.status !== "OK") {
       console.error(tokenResult.errors);
       return;
     }
 
-    const response = await fetch("{% url 'subscribe_payment' %}", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRFToken": "{{ csrf_token }}",
-      },
-      body: JSON.stringify({
-        nonce: tokenResult.token,
-        idempotency_key: String(Date.now())
-      }),
-    });
+    // views.pyの「SubscribeRegisterView」クラスにfetchAPIによるAjax送信
+    try {
+      const response = await fetch("{% url 'subscribe_register' %}", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": "{{ csrf_token }}",
+        },
+        body: JSON.stringify({
+          nonce: tokenResult.token, // カード情報(暗号化済み)
+          idempotency_key: String(Date.now()) // 一意のキー
+        }),
+      });
 
-    if (response.ok) {
-      alert("Payment successful!");
-    } else {
-      console.error("Payment failed!");
+      if (response.ok) {
+        alert("有料プランに登録しました");
+      } else {
+        // サーバー側のエラーレスポンスを取得
+        const result = await response.json();
+
+        // エラーメッセージを表示
+        const errorMessageElement = document.getElementById('errorMessage');
+        errorMessageElement.textContent = result.error_message;
+        errorMessageElement.style.display = 'block';
+      }
+    } catch (error) {
+      alert(`
+        有料プラン登録に失敗しました。管理者にお問い合わせをお願いいたします。
+        Error: ${error.message}
+      `);
     }
   }
 
+  // それぞれの関数の実行
   (async () => {
     const card = await initializeCard();
     const cardButton = document.getElementById("card-button");
