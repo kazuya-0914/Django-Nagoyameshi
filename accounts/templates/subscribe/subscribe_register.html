@@ -95,7 +95,8 @@
         },
         body: JSON.stringify({
           nonce: tokenResult.token, // カード情報(暗号化済み)
-          idempotency_key: String(Date.now()) // 一意のキー
+          idempotency_key: String(Date.now()), // 一意のキー
+          cardholderName: cardholderName, // カード名義人
         }),
       });
 
