@@ -1,3 +1,4 @@
+from django.contrib.auth.mixins import LoginRequiredMixin # ■ 2025/1/10 追記 ■
 from django.shortcuts import render, redirect
 from datetime import date
 
@@ -39,6 +40,27 @@ class TopPageView(generic.ListView):
         category_list = models.Category.objects.all()
         new_restaurant_list = models.Restaurant.objects.all().order_by('-created_at')
 
+        # 平均評価を取得し、並び替え（■ 2025/1/10 修正 ■）
+        restaurants_with_avg_rate = []
+        for restaurant in models.Restaurant.objects.all():
+            average_rate = models.Review.objects.filter(restaurant=restaurant).aggregate(Avg('rate'))
+            average_rate = average_rate['rate__avg'] if average_rate['rate__avg'] is not None else 0
+
+            if average_rate % 1 == 0:
+                average_rate = int(average_rate)
+            else:
+                average_rate = round(average_rate * 2) / 2
+
+            restaurants_with_avg_rate.append({
+                'restaurant': restaurant,
+                'rate': round(average_rate, 2),
+                'rate_star': average_rate,
+            })
+
+        # 平均評価で降順ソート（■ 2025/1/10 修正 ■）
+        sorted_restaurants = sorted(restaurants_with_avg_rate, key=lambda x: x['rate'], reverse=True)
+
+        '''
         # querysetに含まれるレストランの平均レートを、レストランごとに取得して配列に格納
         average_rate_list = []
         average_rate_star_list = []
@@ -58,6 +80,12 @@ class TopPageView(generic.ListView):
             'category_list': category_list,
             'new_restaurant_list': new_restaurant_list,
             'restaurant_list': zip(self.queryset, average_rate_list, average_rate_star_list),
+        })
+        '''
+        context.update({
+            'category_list': category_list,
+            'new_restaurant_list': new_restaurant_list,
+            'restaurant_list': sorted_restaurants, # ■ 2025/1/10 修正 ■
         })
         return context
     
@@ -373,6 +401,20 @@ class ReviewListView(generic.ListView):
     ordering = ['-created_at']
     paginate_by = 5
 
+    # 未ログインの場合のリダイレクト先（■ 2025/1/10 追記 ■）
+    login_url = reverse_lazy('account_login')
+
+    def dispatch(self, request, *args, **kwargs):
+        # ログインしていない場合、LoginRequiredMixin が自動でリダイレクト
+        if not request.user.is_authenticated:
+            return redirect(self.login_url)
+    
+        # 有料会員でない場合は登録ページにリダイレクト
+        if not request.user.is_subscribed:
+            return redirect(reverse_lazy('subscribe_register'))
+        
+        return super().dispatch(request, *args, **kwargs)
+
     def get_queryset(self):
         restaurant_id = self.kwargs['pk']
         queryset = super(ReviewListView, self).get_queryset().order_by('-rate')
@@ -382,7 +424,15 @@ class ReviewListView(generic.ListView):
         pk = self.kwargs['pk']
         context = super(ReviewListView, self).get_context_data(**kwargs)
         restaurant = models.Restaurant.objects.filter(id=pk).first()
-        is_posted = models.Review.objects.filter(user=self.request.user).filter(restaurant=restaurant).exists()
+
+        # ユーザーが認証済みかチェック（■ 2025/1/10 修正 ■）
+        is_posted = False
+        if self.request.user.is_authenticated and self.request.user.is_subscribed:
+            is_posted = models.Review.objects.filter(user=self.request.user).filter(restaurant=restaurant).exists()
+        if not self.request.user.is_authenticated:
+            return redirect(reverse_lazy('account_login'))
+        if not self.request.user.is_subscribed:
+            return redirect(reverse_lazy('subscribe_register'))
 
         average_rate = models.Review.objects.filter(restaurant=restaurant).aggregate(Avg('rate'))
         average_rate = average_rate['rate__avg'] if average_rate['rate__avg'] is not None else 0
@@ -412,13 +462,10 @@ class ReviewCreateView(generic.CreateView):
 
     def get(self, request, **kwargs):
         user = request.user
-
         if user.is_authenticated and user.is_subscribed:
             return super().get(request, **kwargs)
-
         if not user.is_authenticated:
             return redirect(reverse_lazy('account_login'))
-
         if not user.is_subscribed:
             return redirect(reverse_lazy('subscribe_register'))
 
