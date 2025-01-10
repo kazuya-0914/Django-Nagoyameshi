@@ -94,6 +94,7 @@ class Review(models.Model):
 
     def __str__(self):
         return self.restaurant.name
+    
 # お気に入りモデル
 class Favorite(models.Model):
     user = models.ForeignKey(CustomUser, verbose_name='ユーザー', on_delete=models.PROTECT, null=True, blank=True)

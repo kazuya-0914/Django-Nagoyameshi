@@ -1,0 +1,1 @@
+web: gunicorn nagoyameshi.wsgi --workers=1 --timeout 300 --log-file -
