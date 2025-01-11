@@ -46,6 +46,7 @@
               <th scope="col">店舗名</th>
               <th scope="col">予約日時</th>
               <th scope="col">人数</th>
+              <th scope="col">クーポン</th>
               <th scope="col"></th>
             </tr>
           </thead>
@@ -59,6 +60,24 @@
               </td>
               <td>{{ reserve.date }} {{ reserve.time }}</td>
               <td>{{ reserve.number_of_people }}</td>
+              {% comment %} ■ 2025/1/10 追記 ■ {% endcomment %}
+              <td>
+                {% if reserve.coupon %}
+                {{ reserve.coupon.name }}
+                  {% if reserve.date < today %}
+                  <span class="text-muted">→ (使用済み)</span>
+                  {% endif %}
+                  {% if reserve.coupon.expiration_date %}
+                    {% if reserve.coupon.expiration_date < today %}
+                    <span class="text-danger">→ (有効期限切れ)</span>
+                    {% elif reserve.coupon.expiration_date <= today|date:"Y-m-d"|add:"7 days" %}
+                    <span class="text-warning">→ (有効期限間近)</span>
+                    {% endif %}
+                  {% endif %}
+                {% else %}
+                未使用
+                {% endif %}
+              </td>
               <td>
                 {% if reserve.date > today %}
                 <a href="#" class="link-secondary"

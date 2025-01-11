@@ -1,4 +1,5 @@
 from django.contrib.auth.mixins import LoginRequiredMixin # ■ 2025/1/10 追記 ■
+from datetime import timedelta # ■ 2025/1/10 追記 ■
 from django.shortcuts import render, redirect
 from datetime import date
 
@@ -374,8 +375,10 @@ class ReservationListView(generic.ListView):
     
     def get_context_data(self, **kwargs):
         context = super(ReservationListView, self).get_context_data(**kwargs)
+        today = date.today() # ■ 2025/1/10 追記 ■
         context.update({
-            'today': date.today(),
+            'today': today,
+            'one_week_later': today + timedelta(days=7),  # 7日後を計算（■ 2025/1/10 追記 ■）
         })
         return context
         
@@ -383,10 +386,27 @@ class ReservationListView(generic.ListView):
 def reservation_delete(request):
     pk = request.GET.get('pk')
     is_success = True
+    '''
     if pk:
         try:
             models.Reservation.objects.filter(id=pk).delete()
         except:
+            is_success = False
+    else:
+        is_success = False
+    '''
+    # ■ 2025/1/10 追記 ■
+    if pk:
+        try:
+            reservation = models.Reservation.objects.get(id=pk)
+            if reservation.coupon:
+                # クーポン使用履歴を削除
+                models.UsedCoupon.objects.filter(user=reservation.user, coupon=reservation.coupon).delete()
+
+            reservation.delete()
+        except models.Reservation.DoesNotExist:
+            is_success = False
+        except Exception as e:
             is_success = False
     else:
         is_success = False

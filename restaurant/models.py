@@ -38,6 +38,39 @@ class Restaurant(models.Model):
     def __str__(self):
         return self.name
 
+# クーポンモデル（■ 2025/1/10 追記 ■）
+class Coupon(models.Model):
+    restaurant = models.ForeignKey(
+        Restaurant, verbose_name='対象店舗', on_delete=models.CASCADE, related_name='coupons'
+    )
+    discount_rate = models.FloatField(verbose_name='割引率', default=0.1)  # 割引率 (例: 0.1 = 10%)
+    description = models.CharField(verbose_name='クーポン説明', max_length=256)
+    expiration_date = models.DateField(verbose_name='有効期限')
+    created_at = models.DateTimeField(verbose_name='作成日時', auto_now_add=True)
+
+    class Meta:
+        verbose_name_plural = 'Coupons'
+
+    def __str__(self):
+        return f"{self.restaurant.name} - {self.description}"
+    
+# 使用済クーポンモデル（■ 2025/1/10 追記 ■）
+class UsedCoupon(models.Model):
+    user = models.ForeignKey(
+        'accounts.CustomUser', verbose_name='ユーザー', on_delete=models.CASCADE
+    )
+    coupon = models.ForeignKey(
+        Coupon, verbose_name='クーポン', on_delete=models.CASCADE
+    )
+    used_at = models.DateTimeField(verbose_name='使用日時', auto_now_add=True)
+
+    class Meta:
+        verbose_name_plural = 'UsedCoupons'
+        unique_together = ('user', 'coupon')  # 同じクーポンを同じユーザーが複数回使えないように制限
+
+    def __str__(self):
+        return f"{self.user.username} - {self.coupon.description}"
+
 # 予約モデル
 class Reservation(models.Model):
     TIMES = (
@@ -70,6 +103,10 @@ class Reservation(models.Model):
     date = models.DateField(verbose_name='予約日')
     time = models.TimeField(verbose_name='時間', choices=TIMES, default='')
     number_of_people = models.IntegerField(verbose_name='人数', choices=NUMBER_OF_PEOPLE, default='')
+    discount = models.DecimalField(verbose_name='割引額', max_digits=10, decimal_places=2, null=True, blank=True) # ■ 2025/1/10 追記 ■
+    coupon = models.ForeignKey(
+        Coupon, verbose_name='クーポン', on_delete=models.SET_NULL, null=True, blank=True
+    ) # ■ 2025/1/10 追記 ■
     created_at = models.DateTimeField(verbose_name='予約申し込み日時', auto_now_add=True)
     updated_at = models.DateTimeField(verbose_name='予約更新日時', auto_now=True)
 
