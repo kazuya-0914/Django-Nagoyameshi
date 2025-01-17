@@ -2,6 +2,7 @@ import datetime
 
 from accounts.models import CustomUser
 from django.db import models
+from django.conf import settings # ■ 2025/1/17 追記 ■
 
 # カテゴリーモデル
 class Category(models.Model):
@@ -141,6 +142,18 @@ class Favorite(models.Model):
 
     class Meta:
         verbose_name_plural = 'Favorite'
+
+    def __str__(self):
+        return self.restaurant.name
+    
+# 閲覧履歴モデル（■ 2025/1/17 追記 ■）
+class ViewHistory(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name='ユーザー', on_delete=models.CASCADE)
+    restaurant = models.ForeignKey('Restaurant', verbose_name='レストラン', on_delete=models.CASCADE)
+    viewed_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-viewed_at']
 
     def __str__(self):
         return self.restaurant.name

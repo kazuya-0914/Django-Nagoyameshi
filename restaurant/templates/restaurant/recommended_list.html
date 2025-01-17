@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}NAGOYAMESHI{% endblock title %}
+{% block stylesheet %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+{% endblock stylesheet %}
+
+{% block content %}
+<main>
+  <h1>おすすめ店舗一覧</h1>
+
+    <!-- おすすめ店舗が存在するか確認 -->
+    {% if recommended_restaurants %}
+        <ul>
+            <!-- 各店舗をリスト表示 -->
+            {% for restaurant in recommended_restaurants %}
+                <li>
+                    <a href="{% url 'restaurant_detail' restaurant.id %}">
+                        {{ restaurant.name }}
+                    </a>
+                    <p>評価: {{ restaurant.average_rate }} / 5</p>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>現在、おすすめ店舗はありません。</p>
+    {% endif %}
+</main>
+{% endblock content %}

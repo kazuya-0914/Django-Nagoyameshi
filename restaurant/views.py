@@ -1,9 +1,14 @@
 from django.contrib.auth.mixins import LoginRequiredMixin # ■ 2025/1/10 追記 ■
 from datetime import timedelta # ■ 2025/1/10 追記 ■
+from django.utils.timezone import now # ■ 2025/1/17 追記 ■
+from django.shortcuts import get_object_or_404, render # ■ 2025/1/17 追記 ■
+from django.contrib.auth.decorators import login_required # ■ 2025/1/17 追記 ■
+from django.core.cache import cache # ■ 2025/1/17 追記 ■
 from django.shortcuts import render, redirect
 from datetime import date
 
 from django.db.models import Avg
+from django.db.models import Count # ■ 2025/1/17 追記 ■
 from django.db.models import Q
 from django.db.models.query import QuerySet
 from django.http import JsonResponse
@@ -12,6 +17,7 @@ from django.views import generic
 
 from . import models
 from . import forms
+from .models import Restaurant # ■ 2025/1/17 追記 ■
 
 # 会社概要
 class CompanyView(generic.TemplateView):
@@ -89,6 +95,21 @@ class TopPageView(generic.ListView):
             'restaurant_list': sorted_restaurants, # ■ 2025/1/10 修正 ■
         })
         return context
+
+# --- クーポン画像表示 (■ 2025/1/17 追記 ■)
+@login_required
+def coupon_detail(request, restaurant_id):
+    # 有料会員かどうかを確認
+    if not request.user.is_subscribed:
+        return render(request, 'error.html', {'message': 'このクーポンは有料会員のみ使用できます。'})
+
+    restaurant = get_object_or_404(Restaurant, id=restaurant_id)
+    coupon = restaurant.coupons.first()  # クーポンが1つのみ登録されていると仮定
+
+    if not coupon:
+        return render(request, 'error.html', {'message': 'このレストランにはクーポンがありません。'})
+
+    return render(request, 'coupon_detail.html', {'coupon': coupon})
     
 # レストラン詳細画面
 class RestaurantDetailView(generic.DetailView):
@@ -100,6 +121,11 @@ class RestaurantDetailView(generic.DetailView):
         pk = self.kwargs['pk']
         context = super(RestaurantDetailView, self).get_context_data(**kwargs)
         restaurant = models.Restaurant.objects.filter(id=pk).first()
+
+        # ユーザーがログインしている場合、閲覧履歴を記録（■ 2025/1/17 追記 ■）
+        if user.is_authenticated:
+            models.ViewHistory.objects.create(user=user, restaurant=restaurant, viewed_at=now())
+
         is_favorite = False
         if user.is_authenticated:
             is_favorite = models.Favorite.objects.filter(user=user).filter(restaurant=models.Restaurant.objects.get(pk=pk)).exists()
@@ -145,6 +171,11 @@ class RestaurantDetailView(generic.DetailView):
             is_favorite = True
 
         restaurant = models.Restaurant.objects.filter(id=pk).first()
+
+        # ユーザーがログインしている場合、閲覧履歴を記録（■ 2025/1/17 追記 ■）
+        if user.is_authenticated:
+            models.ViewHistory.objects.create(user=user, restaurant=restaurant, viewed_at=now())
+
         average_rate = models.Review.objects.filter(restaurant=restaurant).aggregate(Avg('rate'))
         average_rate = average_rate['rate__avg'] if average_rate['rate__avg'] is not None else 0
         average_rate = round(average_rate, 2)
@@ -314,7 +345,21 @@ class ReservationCreateView(generic.CreateView):
 
         reservation.user = user_instance
         reservation.restaurant = restaurant_instance
+
+        # クーポン適用ロジック
+        coupon = form.cleaned_data.get('coupon')
+        if coupon:
+            # 平均価格 * 0.1 の値引きを適用
+            discount = float(restaurant_instance.price) * 0.1
+            reservation.discount = discount  # 予約モデルに`discount`フィールドが必要
+            reservation.coupon = coupon  # 予約モデルに`coupon`フィールドが必要
+        
         reservation.save()
+
+        # クーポン使用処理
+        if coupon:
+            models.UsedCoupon.objects.create(user=user_instance, coupon=coupon)
+
         return super().form_valid(form)
     
     def form_invalid(self, form):
@@ -445,14 +490,7 @@ class ReviewListView(generic.ListView):
         context = super(ReviewListView, self).get_context_data(**kwargs)
         restaurant = models.Restaurant.objects.filter(id=pk).first()
 
-        # ユーザーが認証済みかチェック（■ 2025/1/10 修正 ■）
-        is_posted = False
-        if self.request.user.is_authenticated and self.request.user.is_subscribed:
-            is_posted = models.Review.objects.filter(user=self.request.user).filter(restaurant=restaurant).exists()
-        if not self.request.user.is_authenticated:
-            return redirect(reverse_lazy('account_login'))
-        if not self.request.user.is_subscribed:
-            return redirect(reverse_lazy('subscribe_register'))
+        is_posted = models.Review.objects.filter(user=self.request.user).filter(restaurant=restaurant).exists()
 
         average_rate = models.Review.objects.filter(restaurant=restaurant).aggregate(Avg('rate'))
         average_rate = average_rate['rate__avg'] if average_rate['rate__avg'] is not None else 0
@@ -580,3 +618,49 @@ def review_delete(request):
         is_success = False
 
     return JsonResponse({'is_success': is_success})
+
+# カテゴリベースでおすすめ店舗を取得 (■ 2025/1/17 追記 ■)
+class RecommendedRestaurantsView(generic.ListView):
+    template_name = "restaurant/recommended_list.html"
+    model = Restaurant
+
+    def get_queryset(self):
+        if not self.request.user.is_authenticated:
+            return Restaurant.objects.none()
+        
+        # ユーザーの閲覧履歴からカテゴリを取得
+        user_history = models.ViewHistory.objects.filter(user=self.request.user)
+        viewed_categories = user_history.values_list('restaurant__category', flat=True)
+        
+        # 同じカテゴリの店舗をおすすめ
+        recommendations = Restaurant.objects.filter(category__in=viewed_categories).exclude(
+            id__in=user_history.values_list('restaurant__id', flat=True)
+        ).annotate(view_count=Count('viewhistory')).order_by('-view_count')
+        
+        return recommendations
+
+# 閲覧履歴に基づくキャッシュ (■ 2025/1/17 追記 ■)
+class RecommendedRestaurantsView(generic.ListView):
+    template_name = "restaurant/recommended_list.html"
+    model = Restaurant
+
+    def get_queryset(self):
+        if not self.request.user.is_authenticated:
+            return Restaurant.objects.none()
+        
+        cache_key = f'recommendations_{self.request.user.id}'
+        recommendations = cache.get(cache_key)
+        
+        if recommendations is None:
+            # ロジックを実行しておすすめを取得
+            user_history = models.ViewHistory.objects.filter(user=self.request.user)
+            viewed_categories = user_history.values_list('restaurant__category', flat=True)
+            recommendations = Restaurant.objects.filter(
+                category__in=viewed_categories
+            ).exclude(
+                id__in=user_history.values_list('restaurant__id', flat=True)
+            ).annotate(view_count=Count('viewhistory')).order_by('-view_count')
+            
+            # キャッシュに保存
+            cache.set(cache_key, recommendations, timeout=3600)  # 1時間キャッシュ
+        return recommendations

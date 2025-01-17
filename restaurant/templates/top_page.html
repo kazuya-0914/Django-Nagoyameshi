@@ -9,7 +9,7 @@
 {% block content %}
 <main>
   {# スライドショー#}
-  <div>
+  <div id="slideshow">
     <div class="swiper">
       <div class="swiper-wrapper">
         <div class="swiper-slide">
@@ -47,99 +47,130 @@
 
   {# 評価が高いお店 #}
   <div class="container nagoyameshi-container">
-    <h2 class="mb-3">評価が高いお店</h2>
-    <div class="row row-cols-xl-6 row-cols-md-3 row-cols-2 g-3 mb-5">
-      {% comment %} {% for restaurant, rate, rate_star in restaurant_list %} {% endcomment %}
-      {% for item in restaurant_list %}
-      <div class="col">
-        {% comment %} <a href="{% url 'restaurant_detail' restaurant.id %}" class="link-dark card-link"> {% endcomment %}
-        <a href="{% url 'restaurant_detail' item.restaurant.id %}" class="link-dark card-link">
-          <div class="card h-100">
-            {% comment %} {% if restaurant.photo %} {% endcomment %}
-            {% if item.restaurant.photo %}
-            {% comment %} <img src="{{ restaurant.photo.url }}" class="card-img-top vertical-card-image"> {% endcomment %}
-            <img src="{{ item.restaurant.photo.url }}" class="card-img-top vertical-card-image">
-            {% endif %}
-            <div class="card-body">
-              {% comment %} <h3 class="card-title">{{ restaurant.name }}</h3> {% endcomment %}
-              <h3 class="card-title">{{ item.restaurant.name }}</h3>
-              <div class="text-muted small mb-1">
-                <div class="d-inline-block">
-                  {% comment %} {{ restaurant.category }} {% endcomment %}
-                  {{ item.restaurant.category }}
+    <section id="evaluation">
+      <h2 class="mb-3">評価が高いお店</h2>
+      <div class="row row-cols-xl-6 row-cols-md-3 row-cols-2 g-3 mb-5">
+        {% comment %} {% for restaurant, rate, rate_star in restaurant_list %} {% endcomment %}
+        {% for item in restaurant_list %}
+        <div class="col">
+          {% comment %} <a href="{% url 'restaurant_detail' restaurant.id %}" class="link-dark card-link"> {% endcomment %}
+          <a href="{% url 'restaurant_detail' item.restaurant.id %}" class="link-dark card-link">
+            <div class="card h-100">
+              {% comment %} {% if restaurant.photo %} {% endcomment %}
+              {% if item.restaurant.photo %}
+              {% comment %} <img src="{{ restaurant.photo.url }}" class="card-img-top vertical-card-image"> {% endcomment %}
+              <img src="{{ item.restaurant.photo.url }}" class="card-img-top vertical-card-image">
+              {% endif %}
+              <div class="card-body">
+                {% comment %} <h3 class="card-title">{{ restaurant.name }}</h3> {% endcomment %}
+                <h3 class="card-title">{{ item.restaurant.name }}</h3>
+                <div class="text-muted small mb-1">
+                  <div class="d-inline-block">
+                    {% comment %} {{ restaurant.category }} {% endcomment %}
+                    {{ item.restaurant.category }}
+                  </div>
                 </div>
+                <p class="card-text">
+                <span class="star-rating me-1" data-rate="{{ rate_star }}"></span>
+                {% comment %} {{ rate }} {% endcomment %}
+                {{ item.rate }}
+                </p>
               </div>
-              <p class="card-text">
-              <span class="star-rating me-1" data-rate="{{ rate_star }}"></span>
-              {% comment %} {{ rate }} {% endcomment %}
-              {{ item.rate }}
-              </p>
             </div>
-          </div>
-        </a>
+          </a>
+        </div>
+        {% endfor %}
       </div>
-      {% endfor %}
-    </div>
-
+    </section>
+  
     {# カテゴリから探す #}
-    <h2 class="mb-3">カテゴリから探す</h2>
-    <div class="row row-cols-xl-6 row-cols-md-3 row-cols-2 g-3 mb-3">
-      {% for category in category_list %}
-      {% if forloop.counter < 7 %}
-      <div class="col">
-        <a href="{% url 'restaurant_list' %}?category={{ category.name }}&button_type=category" class="card-link">
-          <div class="card text-white">
-            {% if category.photo %}
-            <img src="{{ category.photo.url }}" class="card-img vertical-card-image" alt="{{ category.name }}">
-            {% endif %}
-            <div class="card-img-overlay d-flex justify-content-center align-items-center overlay-background">
-              <h3 class="card-title category-name">{{ category.name }}</h3>
+    <section id="category">
+      <h2 class="mb-3">カテゴリから探す</h2>
+      <div class="row row-cols-xl-6 row-cols-md-3 row-cols-2 g-3 mb-3">
+        {% for category in category_list %}
+        {% if forloop.counter < 7 %}
+        <div class="col">
+          <a href="{% url 'restaurant_list' %}?category={{ category.name }}&button_type=category" class="card-link">
+            <div class="card text-white">
+              {% if category.photo %}
+              <img src="{{ category.photo.url }}" class="card-img vertical-card-image" alt="{{ category.name }}">
+              {% endif %}
+              <div class="card-img-overlay d-flex justify-content-center align-items-center overlay-background">
+                <h3 class="card-title category-name">{{ category.name }}</h3>
+              </div>
             </div>
-          </div>
-        </a>
+          </a>
+        </div>
+        {% endif %}
+        {% endfor %}
       </div>
-      {% endif %}
-      {% endfor %}
-    </div>
-    <div class="mb-5">
-      {% for category in category_list %}
-      {% if forloop.counter > 6 %}
-      {#TODO:4#}
-      <a href="#" class="btn btn-outline-secondary btn-sm me-1 mb-2">{{ category.name }}</a>
-      {% endif %}
-      {% endfor %}
-    </div>
+      <div class="mb-5">
+        {% for category in category_list %}
+        {% if forloop.counter > 6 %}
+        {#TODO:4#}
+        <a href="#" class="btn btn-outline-secondary btn-sm me-1 mb-2">{{ category.name }}</a>
+        {% endif %}
+        {% endfor %}
+      </div>
+    </section>
 
     {# 新規掲載店 #}
-    <h2 class="mb-3">新規掲載店</h2>
-    <div class="row row-cols-xl-6 row-cols-md-3 row-cols-2 g-3 mb-5">
-      {% for new_restaurant in new_restaurant_list %}
-      <div class="col">
-        <a href="{% url 'restaurant_detail' new_restaurant.id %}" class="link-dark card-link">
+    <section id="newly">
+      <h2 class="mb-3">新規掲載店</h2>
+      <div class="row row-cols-xl-6 row-cols-md-3 row-cols-2 g-3 mb-5">
+        {% for new_restaurant in new_restaurant_list %}
+        <div class="col">
+          <a href="{% url 'restaurant_detail' new_restaurant.id %}" class="link-dark card-link">
+            <div class="card h-100">
+              {% if new_restaurant.photo %}
+              <img src="{{ new_restaurant.photo.url }}" class="card-img-top vertical-card-image">
+              {% endif %}
+              <div class="card-body">
+                <h3 class="card-title">{{ new_restaurant.name }}</h3>
+                <div class="text-muted small mb-1">
+                  <div class="d-inline-block">
+                    {{ new_restaurant.category }}
+                  </div>
+                </div>
+                <p class="card-text">{{ new_restaurant.description| truncatechars:20 }}</p>
+              </div>
+            </div>
+          </a>
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+
+    {# おすすめ店舗 #}
+    <section id="recommend">
+      <h2 class="mb-3">おすすめ店舗</h2>
+      <div class="row row-cols-xl-6 row-cols-md-3 row-cols-2 g-3 mb-5">
+        {% for restaurant in object_list %}
+        <div class="col">
           <div class="card h-100">
-            {% if new_restaurant.photo %}
-            <img src="{{ new_restaurant.photo.url }}" class="card-img-top vertical-card-image">
-            {% endif %}
+            <img src="{{ restaurant.photo.url }}" class="card-img-top" alt="{{ restaurant.name }}">
             <div class="card-body">
-              <h3 class="card-title">{{ new_restaurant.name }}</h3>
+              <h3 class="card-title">{{ restaurant.name }}</h3>
               <div class="text-muted small mb-1">
                 <div class="d-inline-block">
-                  {{ new_restaurant.category }}
+                  {{ restaurant.category }}
                 </div>
               </div>
-              <p class="card-text">{{ new_restaurant.description| truncatechars:20 }}</p>
+              <a href="{% url 'restaurant_detail' restaurant.id %}" class="btn btn-primary">詳細を見る</a>
             </div>
           </div>
-        </a>
+        </div>
+        {% endfor %}
       </div>
-      {% endfor %}
-    </div>
+    </section>
   </div>
 </main>
 {% endblock content %}
 
 {% block js_script %}
 <script src="https://cdn.jsdelivr.net/npm/swiper@8/swiper-bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.7/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.7/dist/ScrollTrigger.min.js"></script>
 <script>
   const swiper = new Swiper('.swiper', {
     loop: true,
@@ -151,5 +182,21 @@
       disableOnInteraction: false,
     },
   });
+
+  // GSAP
+  const tl = gsap.timeline({
+    scrollTrigger: {
+      trigger: "#slideshow",
+      start: "top top",
+      // end: "bottom top",
+      scrub: false,
+      markers: true
+    }
+  });
+  tl.from("#evaluation", {
+    x: 300,
+    duration: 1,
+    opacity: 0,
+  })
 </script>
 {% endblock js_script %}

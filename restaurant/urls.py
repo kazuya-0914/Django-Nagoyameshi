@@ -17,4 +17,5 @@ urlpatterns = [
   path('review-update/<int:pk>/', views.ReviewUpdateView.as_view(), name="review_update"),
   path('review-delete', views.review_delete, name='review_delete'),
   path('review-delete', views.review_delete, name='process_payment'),
+  path('coupon/<int:restaurant_id>/', views.coupon_detail, name='coupon_detail'), # ■ 2025/1/17 追記 ■
 ]

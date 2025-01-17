@@ -129,6 +129,17 @@
             </button>
             {% endif %}
           </form>
+          <div class="text-center">
+            {% if request.user.is_authenticated and request.user.is_subscribed %}
+              {% if object.coupons.exists %}
+              <a href="{% url 'coupon_detail' object.id %}" target="_blank"
+                class="mt-4 btn btn-outline-success shadow-sm w-50 remove-favorite-button"
+                onclick="window.open(this.href, 'couponWindow', 'width=687,height=394'); return false;">
+              クーポンを見る
+              </a>
+              {% endif %}
+            {% endif %}
+          </div>
         </div>
       </div>
     </div>
