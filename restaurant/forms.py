@@ -14,8 +14,9 @@ class ReservationCreateForm(forms.ModelForm):
         model = Reservation
         fields = ('date', 'time', 'number_of_people', 'coupon',) # ■ 2025/1/10 追記 ■
 
-    def __init__(self, *args, **kwags):
-        super().__init__(*args, **kwags)
+    def __init__(self, *args, **kwargs):
+        restaurant = kwargs.pop('restaurant', None) # ■ 2025/1/18 追記 ■
+        super().__init__(*args, **kwargs)
 
         self.fields['date'].widget.attrs['class'] = 'form-control'
         self.fields['date'].widget.attrs['id'] = 'reservation_date'
@@ -23,6 +24,13 @@ class ReservationCreateForm(forms.ModelForm):
         self.fields['time'].widget.attrs['class'] = 'form-control'
         self.fields['number_of_people'].widget.attrs['class'] = 'form-control'
         self.fields['coupon'].widget.attrs['class'] = 'form-control'  # ■ 2025/1/10 追記 ■
+
+        # ■ 2025/1/18 追記 ■
+        if restaurant:
+            self.fields['coupon'].queryset = Coupon.objects.filter(
+            restaurant=restaurant,
+            expiration_date__gte=timezone.now()
+        )
         
     # ■ 2025/1/10 追記 ■
     def clean_coupon(self):

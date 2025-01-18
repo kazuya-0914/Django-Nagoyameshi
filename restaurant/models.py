@@ -30,6 +30,7 @@ class Restaurant(models.Model):
     review_num = models.IntegerField(verbose_name='レビュー数', default=0)
     reservation_num = models.IntegerField(verbose_name='予約数', default=0)
     photo = models.ImageField(verbose_name='写真', blank=True, null=True)
+    is_coupon_applied = models.BooleanField(default=False, verbose_name='クーポン適用') # ■ 2025/1/18 追記 ■
     created_at = models.DateTimeField(verbose_name='作成日時', auto_now_add=True)
     updated_at = models.DateTimeField(verbose_name='更新日時', auto_now=True)
 

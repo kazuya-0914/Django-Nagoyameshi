@@ -328,6 +328,12 @@ class ReservationCreateView(generic.CreateView):
     form_class = forms.ReservationCreateForm
     success_url = reverse_lazy('top_page')
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        # 現在のレストラン情報をフォームに渡す
+        kwargs['restaurant'] = models.Restaurant.objects.get(pk=self.kwargs['pk'])
+        return kwargs
+    '''
     def get(self, request, **kwargs):
         user = request.user
 
@@ -337,6 +343,7 @@ class ReservationCreateView(generic.CreateView):
             return redirect(reverse_lazy('account_login'))
         if not user.is_subscribed:
             return redirect(reverse_lazy('subscribe_register'))
+    '''
         
     def form_valid(self, form):
         user_instance = self.request.user
@@ -349,9 +356,7 @@ class ReservationCreateView(generic.CreateView):
         # クーポン適用ロジック
         coupon = form.cleaned_data.get('coupon')
         if coupon:
-            # 平均価格 * 0.1 の値引きを適用
-            discount = float(restaurant_instance.price) * 0.1
-            reservation.discount = discount  # 予約モデルに`discount`フィールドが必要
+            reservation.is_coupon_applied = True
             reservation.coupon = coupon  # 予約モデルに`coupon`フィールドが必要
         
         reservation.save()

@@ -62,17 +62,21 @@
               <td>{{ reserve.number_of_people }}</td>
               {% comment %} ■ 2025/1/10 追記 ■ {% endcomment %}
               <td>
-                {% if reserve.coupon %}
-                {{ reserve.coupon.name }}
-                  {% if reserve.date < today %}
-                  <span class="text-muted">→ (使用済み)</span>
-                  {% endif %}
-                  {% if reserve.coupon.expiration_date %}
-                    {% if reserve.coupon.expiration_date < today %}
-                    <span class="text-danger">→ (有効期限切れ)</span>
-                    {% elif reserve.coupon.expiration_date <= today|date:"Y-m-d"|add:"7 days" %}
-                    <span class="text-warning">→ (有効期限間近)</span>
+                {% if reserve.is_coupon_applied %}
+                  {% if reserve.coupon %}
+                  {{ reserve.coupon.name }}
+                    {% if reserve.date < today %}
+                    <span class="text-muted">→ (使用済み)</span>
                     {% endif %}
+                    {% if reserve.coupon.expiration_date %}
+                      {% if reserve.coupon.expiration_date < today %}
+                      <span class="text-danger">→ (有効期限切れ)</span>
+                      {% elif reserve.coupon.expiration_date <= today|date:"Y-m-d"|add:"7 days" %}
+                      <span class="text-warning">→ (有効期限間近)</span>
+                      {% endif %}
+                    {% endif %}
+                  {% else %}
+                  クーポン適用済み
                   {% endif %}
                 {% else %}
                 未使用
@@ -129,3 +133,43 @@
   </div>
 </main>
 {% endblock content %}
+
+{% block js_script %}
+    <script src="https://code.jquery.com/jquery-3.7.1.js"
+            integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4=" crossorigin="anonymous">
+    </script>
+
+    <script>
+        const cancelReservationForm = document.forms.cancelReservationForm;
+
+        document.getElementById('cancelReservationModal').addEventListener('show.bs.modal', (event) => {
+            let deleteButton = event.relatedTarget;
+            let reservationId = deleteButton.dataset.reservationId;
+            let reservationRestaurant = deleteButton.dataset.restaurantName;
+            console.log('reviewId:', reservationId)
+            console.log('reservationRestaurant:', reservationRestaurant)
+
+            document.getElementById('reserve-delete-button').addEventListener('click', () => {
+                deleteReservation(reservationId)
+            });
+        });
+
+        function deleteReservation(id) {
+            $.ajax({
+                url: "/reservation-delete",
+                type: "GET",
+                data: {
+                    pk: id
+                },
+                dataType: "json",
+                success: function (result) {
+                    $('#cancelReservationModal').modal('hide');
+                    location.reload()
+                },
+                error: function () {
+                    alert('error')
+                }
+            });
+        }
+    </script>
+{% endblock %}
