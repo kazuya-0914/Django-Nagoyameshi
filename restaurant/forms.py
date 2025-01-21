@@ -1,6 +1,6 @@
 from django import forms
 from django.utils import timezone  # ■ 2025/1/10 追記 ■
-from .models import Reservation, Review, Coupon  # ■ 2025/1/10 追記 ■
+from .models import Reservation, Review, UsedCoupon, Coupon  # ■ 2025/1/10 追記 ■
 from django.core.exceptions import ValidationError  # ■ 2025/1/10 追記 ■
 
 class ReservationCreateForm(forms.ModelForm):
@@ -15,6 +15,8 @@ class ReservationCreateForm(forms.ModelForm):
         fields = ('date', 'time', 'number_of_people', 'coupon',) # ■ 2025/1/10 追記 ■
 
     def __init__(self, *args, **kwargs):
+        # ユーザーとレストランを取得
+        user = kwargs.pop('user', None)
         restaurant = kwargs.pop('restaurant', None) # ■ 2025/1/18 追記 ■
         super().__init__(*args, **kwargs)
 
@@ -26,12 +28,13 @@ class ReservationCreateForm(forms.ModelForm):
         self.fields['coupon'].widget.attrs['class'] = 'form-control'  # ■ 2025/1/10 追記 ■
 
         # ■ 2025/1/18 追記 ■
-        if restaurant:
+        if user and restaurant:
+            used_coupons = UsedCoupon.objects.filter(user=user).values_list('coupon_id', flat=True)
             self.fields['coupon'].queryset = Coupon.objects.filter(
-            restaurant=restaurant,
-            expiration_date__gte=timezone.now()
-        )
-        
+                restaurant=restaurant,
+                expiration_date__gte=timezone.now()
+            ).exclude(id__in=used_coupons)
+
     # ■ 2025/1/10 追記 ■
     def clean_coupon(self):
         coupon = self.cleaned_data.get('coupon')

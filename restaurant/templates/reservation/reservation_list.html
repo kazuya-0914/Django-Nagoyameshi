@@ -60,19 +60,19 @@
               </td>
               <td>{{ reserve.date }} {{ reserve.time }}</td>
               <td>{{ reserve.number_of_people }}</td>
-              {% comment %} ■ 2025/1/10 追記 ■ {% endcomment %}
+              {% comment %} ■ 2025/1/18 追記 ■ {% endcomment %}
               <td>
                 {% if reserve.is_coupon_applied %}
                   {% if reserve.coupon %}
-                  {{ reserve.coupon.name }}
+                  {{ reserve.coupon.description }}
                     {% if reserve.date < today %}
-                    <span class="text-muted">→ (使用済み)</span>
+                    <div class="text-muted">(使用済み)</div>
                     {% endif %}
                     {% if reserve.coupon.expiration_date %}
                       {% if reserve.coupon.expiration_date < today %}
-                      <span class="text-danger">→ (有効期限切れ)</span>
+                      <div class="text-danger">(有効期限切れ)</div>
                       {% elif reserve.coupon.expiration_date <= today|date:"Y-m-d"|add:"7 days" %}
-                      <span class="text-warning">→ (有効期限間近)</span>
+                      <div class="text-warning">(有効期限間近)</div>
                       {% endif %}
                     {% endif %}
                   {% else %}

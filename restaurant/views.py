@@ -328,12 +328,6 @@ class ReservationCreateView(generic.CreateView):
     form_class = forms.ReservationCreateForm
     success_url = reverse_lazy('top_page')
 
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        # 現在のレストラン情報をフォームに渡す
-        kwargs['restaurant'] = models.Restaurant.objects.get(pk=self.kwargs['pk'])
-        return kwargs
-    '''
     def get(self, request, **kwargs):
         user = request.user
 
@@ -343,7 +337,12 @@ class ReservationCreateView(generic.CreateView):
             return redirect(reverse_lazy('account_login'))
         if not user.is_subscribed:
             return redirect(reverse_lazy('subscribe_register'))
-    '''
+    
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user  # ログイン中のユーザーを渡す
+        kwargs['restaurant'] = get_object_or_404(Restaurant, id=self.kwargs['pk'])  # 対象レストランを渡す
+        return kwargs
         
     def form_valid(self, form):
         user_instance = self.request.user
